@@ -1,0 +1,32 @@
+{
+  "name": "Seduction Codex — Compendium des Dynamiques Relationnelles",
+  "short_name": "Seduction Codex",
+  "description": "Compendium interactif et guide offline-first des 8 œuvres majeures de la séduction, psychologie relationnelle et stratégie.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#090d16",
+  "theme_color": "#0f172a",
+  "scope": "./",
+  "categories": ["lifestyle", "books", "education"],
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

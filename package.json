@@ -1,0 +1,20 @@
+{
+  "name": "seduction-codex",
+  "version": "1.0.0",
+  "description": "Progressive Web App (PWA) interactive et offline-first décodant 8 œuvres majeures de la séduction et des dynamiques relationnelles.",
+  "main": "index.html",
+  "type": "module",
+  "scripts": {
+    "start": "npx serve . -l 3000",
+    "dev": "npx serve . -l 3000"
+  },
+  "keywords": [
+    "pwa",
+    "offline-first",
+    "tailwind",
+    "seduction-codex",
+    "interactive-quiz"
+  ],
+  "author": "Antigravity",
+  "license": "MIT"
+}
