@@ -1,6 +1,6 @@
 /**
- * Seduction Codex - Application Controller
- * Gestion d'état, filtres dynamiques, persistance locale et navigation PWA
+ * Seduction Codex - Application Controller (App Router & State Manager)
+ * Architecture Native-like SPA : Navigation par écrans/onglets sans scroll de page
  */
 
 import { BOOKS_DATA, CATEGORIES, PHILOSOPHY_FILTERS } from "./data/books.js";
@@ -20,17 +20,20 @@ class App {
     this.selectedCategory = "Tous les ouvrages";
     this.selectedPhilosophy = "all";
     this.searchQuery = "";
-    this.showOnlyBookmarks = false;
+    this.activeView = "catalogue"; // "catalogue" | "stages" | "journal" | "quiz" | "bookmarks" | "manifesto"
     this.bookmarks = this.loadBookmarks();
 
     // DOM Elements
+    this.viewport = document.getElementById("app-viewport");
     this.gridElement = document.getElementById("books-grid");
+    this.bookmarksGrid = document.getElementById("bookmarks-grid");
     this.categoryTabsContainer = document.getElementById("category-tabs");
     this.philosophyFiltersContainer = document.getElementById("philosophy-filters");
     this.searchInput = document.getElementById("search-input");
     this.searchClearBtn = document.getElementById("search-clear");
     this.booksCountBadge = document.getElementById("books-count-badge");
     this.bookmarkCountElements = document.querySelectorAll(".bookmark-count");
+    this.activeScreenLabel = document.getElementById("active-screen-label");
     this.connectionStatus = document.getElementById("connection-status");
 
     // Initialize Subcomponents
@@ -61,10 +64,96 @@ class App {
     this.renderCategoryTabs();
     this.renderPhilosophyFilters();
     this.renderBooks();
+    this.renderBookmarksView();
     this.updateBookmarkCounts();
     this.bindEvents();
     this.setupNetworkStatus();
     this.registerServiceWorker();
+
+    // Check URL Hash for direct screen routing
+    const initialHash = window.location.hash.replace("#", "").trim();
+    const validViews = ["catalogue", "stages", "journal", "quiz", "bookmarks", "manifesto"];
+    if (validViews.includes(initialHash)) {
+      this.switchView(initialHash);
+    } else {
+      this.switchView("catalogue");
+    }
+
+    // Handle browser back/forward gestures
+    window.addEventListener("hashchange", () => {
+      const hash = window.location.hash.replace("#", "").trim();
+      if (validViews.includes(hash) && hash !== this.activeView) {
+        this.switchView(hash, false);
+      }
+    });
+  }
+
+  // --- NATIVE-LIKE SCREEN ROUTER ---
+  switchView(viewName, updateHash = true) {
+    this.activeView = viewName;
+
+    // View labels mapping
+    const labels = {
+      catalogue: "Catalogue",
+      stages: "Les 5 Étapes",
+      journal: "Carnet Secret",
+      quiz: "Quiz d'Archétype",
+      bookmarks: "Mes Favoris",
+      manifesto: "Vision & Piliers"
+    };
+
+    if (this.activeScreenLabel) {
+      this.activeScreenLabel.textContent = labels[viewName] || "Catalogue";
+    }
+
+    // Hide all screens, show current screen
+    document.querySelectorAll(".app-screen").forEach(screen => {
+      screen.classList.add("hidden");
+    });
+
+    const targetScreen = document.getElementById(`view-${viewName}`);
+    if (targetScreen) {
+      targetScreen.classList.remove("hidden");
+    }
+
+    // Reset contained viewport scroll to top
+    if (this.viewport) {
+      this.viewport.scrollTop = 0;
+    }
+
+    // Update Desktop Nav Tabs styling
+    document.querySelectorAll(".nav-tab").forEach(tab => {
+      const tabView = tab.getAttribute("data-view");
+      if (tabView === viewName) {
+        tab.className = "nav-switch-btn nav-tab px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm";
+      } else {
+        tab.className = "nav-switch-btn nav-tab px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/40";
+      }
+    });
+
+    // Update Mobile Bottom Nav Tabs styling
+    document.querySelectorAll(".mobile-tab").forEach(tab => {
+      const tabView = tab.getAttribute("data-view");
+      if (tabView === viewName) {
+        tab.className = "nav-switch-btn mobile-tab flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all text-amber-400 font-bold bg-amber-500/10";
+      } else {
+        tab.className = "nav-switch-btn mobile-tab flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all text-slate-400 hover:text-slate-200";
+      }
+    });
+
+    // Screen specific refreshes
+    if (viewName === "bookmarks") {
+      this.renderBookmarksView();
+    } else if (viewName === "stages") {
+      this.stagesView.render();
+    } else if (viewName === "journal") {
+      this.journalView.render();
+    }
+
+    // Update URL hash without scrolling
+    if (updateHash && window.location.hash !== `#${viewName}`) {
+      window.history.pushState(null, "", `#${viewName}`);
+    }
   }
 
   // --- Bookmarks Persistence ---
@@ -81,7 +170,7 @@ class App {
     try {
       localStorage.setItem("seduction_codex_bookmarks", JSON.stringify([...this.bookmarks]));
     } catch (e) {
-      console.error("Failed to save bookmarks to localStorage", e);
+      console.error("Failed to save bookmarks", e);
     }
     this.updateBookmarkCounts();
   }
@@ -97,6 +186,7 @@ class App {
     }
     this.saveBookmarks();
     this.renderBooks();
+    this.renderBookmarksView();
   }
 
   updateBookmarkCounts() {
@@ -105,55 +195,34 @@ class App {
     });
   }
 
-  // --- Rendering UI Filters ---
+  // --- Rendering UI Filters & Catalogue ---
   renderCategoryTabs() {
     if (!this.categoryTabsContainer) return;
 
     this.categoryTabsContainer.innerHTML = CATEGORIES.map(cat => {
-      const isSelected = this.selectedCategory === cat && !this.showOnlyBookmarks;
+      const isSelected = this.selectedCategory === cat;
       let count = cat === "Tous les ouvrages" ? this.books.length : this.books.filter(b => b.category === cat).length;
 
       return `
         <button 
           data-category="${cat}"
-          class="cat-tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all whitespace-nowrap flex items-center gap-2 border ${
+          class="cat-tab-btn px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1.5 border ${
             isSelected 
-              ? "bg-amber-500 text-slate-950 font-bold border-amber-400 shadow-lg shadow-amber-500/20" 
+              ? "bg-amber-500 text-slate-950 font-bold border-amber-400 shadow-md" 
               : "bg-slate-900/80 text-slate-300 hover:text-white border-slate-800 hover:border-slate-700"
           }"
         >
           <span>${cat}</span>
-          <span class="px-1.5 py-0.2 rounded-full text-[10px] ${isSelected ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-800 text-slate-400'}">
+          <span class="px-1.5 py-0.1 rounded-full text-[10px] ${isSelected ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-800 text-slate-400'}">
             ${count}
           </span>
         </button>
       `;
-    }).join("") + `
-      <button 
-        id="btn-filter-bookmarks"
-        class="cat-tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all whitespace-nowrap flex items-center gap-2 border ${
-          this.showOnlyBookmarks 
-            ? "bg-amber-500 text-slate-950 font-bold border-amber-400 shadow-lg shadow-amber-500/20" 
-            : "bg-slate-900/80 text-slate-300 hover:text-white border-slate-800 hover:border-slate-700"
-        }"
-      >
-        <span class="text-amber-400">★</span>
-        <span>Mes Favoris</span>
-        <span class="px-1.5 py-0.2 rounded-full text-[10px] ${this.showOnlyBookmarks ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-800 text-slate-400'} bookmark-count">
-          ${this.bookmarks.size}
-        </span>
-      </button>
-    `;
+    }).join("");
 
-    // Bind tab clicks
     this.categoryTabsContainer.querySelectorAll(".cat-tab-btn").forEach(btn => {
       btn.addEventListener("click", () => {
-        if (btn.id === "btn-filter-bookmarks") {
-          this.showOnlyBookmarks = true;
-        } else {
-          this.showOnlyBookmarks = false;
-          this.selectedCategory = btn.getAttribute("data-category");
-        }
+        this.selectedCategory = btn.getAttribute("data-category");
         this.renderCategoryTabs();
         this.renderBooks();
       });
@@ -189,16 +258,10 @@ class App {
     });
   }
 
-  // --- Filtering Logic & Book Cards ---
   getFilteredBooks() {
     return this.books.filter(book => {
-      // Bookmarks filter
-      if (this.showOnlyBookmarks && !this.bookmarks.has(book.id)) {
-        return false;
-      }
-
       // Category filter
-      if (!this.showOnlyBookmarks && this.selectedCategory !== "Tous les ouvrages" && book.category !== this.selectedCategory) {
+      if (this.selectedCategory !== "Tous les ouvrages" && book.category !== this.selectedCategory) {
         return false;
       }
 
@@ -233,73 +296,94 @@ class App {
 
     const filtered = this.getFilteredBooks();
 
-    // Update count badge
     if (this.booksCountBadge) {
-      if (this.showOnlyBookmarks) {
-        this.booksCountBadge.textContent = `${filtered.length} favori${filtered.length > 1 ? "s" : ""}`;
-      } else {
-        this.booksCountBadge.textContent = `${filtered.length} ouvrage${filtered.length > 1 ? "s" : ""}`;
-      }
+      this.booksCountBadge.textContent = `${filtered.length} ouvrage${filtered.length > 1 ? "s" : ""}`;
     }
 
     if (filtered.length === 0) {
       this.gridElement.innerHTML = `
-        <div class="col-span-full py-16 px-4 text-center rounded-3xl border border-dashed border-slate-800 bg-slate-900/40 backdrop-blur-sm space-y-4">
-          <div class="w-14 h-14 mx-auto rounded-2xl bg-slate-800/80 flex items-center justify-center text-slate-400 text-2xl">
-            📜
-          </div>
-          <div class="space-y-1">
-            <h4 class="font-serif text-lg font-bold text-slate-200">Aucun manuscrit trouvé</h4>
-            <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
-              ${this.showOnlyBookmarks 
-                ? "Vous n'avez pas encore marqué d'ouvrages comme favoris. Cliquez sur le signet d'un livre pour l'enregistrer." 
-                : "Aucun ouvrage ne correspond à vos critères de recherche ou de filtre."}
-            </p>
-          </div>
-          <button id="btn-reset-filters" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-semibold shadow-md transition-colors active:scale-95">
-            ${getIcon("refresh", "w-3.5 h-3.5")}
-            <span>Réinitialiser les filtres</span>
+        <div class="col-span-full py-16 px-4 text-center rounded-2xl border border-dashed border-slate-800 bg-slate-900/40 space-y-3">
+          <span class="text-3xl block">📜</span>
+          <h4 class="font-serif text-lg font-bold text-slate-200">Aucun manuscrit trouvé</h4>
+          <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+            Aucun ouvrage ne correspond à vos critères de recherche.
+          </p>
+          <button id="btn-reset-filters" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-semibold shadow transition-colors">
+            Réinitialiser les filtres
           </button>
         </div>
       `;
 
       const resetBtn = this.gridElement.querySelector("#btn-reset-filters");
-      if (resetBtn) {
-        resetBtn.addEventListener("click", () => this.resetFilters());
-      }
+      if (resetBtn) resetBtn.addEventListener("click", () => this.resetFilters());
       return;
     }
 
     this.gridElement.innerHTML = "";
     filtered.forEach(book => {
-      const isBookmarked = this.bookmarks.has(book.id);
-      const card = createBookCard(book, isBookmarked);
-
-      // Bookmark button on card
-      const bookmarkBtn = card.querySelector(".btn-bookmark");
-      if (bookmarkBtn) {
-        bookmarkBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          this.toggleBookmark(book.id);
-        });
-      }
-
-      // Open detail
-      const detailBtn = card.querySelector(".btn-open-detail");
-      if (detailBtn) {
-        detailBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          this.openBookDetail(book.id);
-        });
-      }
-
-      // Card general click
-      card.addEventListener("click", () => {
-        this.openBookDetail(book.id);
-      });
-
+      const card = this.createCardElement(book);
       this.gridElement.appendChild(card);
     });
+  }
+
+  renderBookmarksView() {
+    if (!this.bookmarksGrid) return;
+
+    const bookmarkedBooks = this.books.filter(b => this.bookmarks.has(b.id));
+
+    if (bookmarkedBooks.length === 0) {
+      this.bookmarksGrid.innerHTML = `
+        <div class="col-span-full py-16 px-4 text-center rounded-3xl border border-dashed border-slate-800 bg-slate-900/40 space-y-4">
+          <span class="text-4xl block">⭐</span>
+          <div class="space-y-1">
+            <h4 class="font-serif text-xl font-bold text-slate-200">Aucun favori pour le moment</h4>
+            <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+              Parcourez le catalogue et cliquez sur le signet d'un livre pour l'ajouter à vos favoris et le retrouver ici en un clic.
+            </p>
+          </div>
+          <button class="nav-switch-btn px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold" data-view="catalogue">
+            Parcourir les 8 Ouvrages
+          </button>
+        </div>
+      `;
+      this.bookmarksGrid.querySelectorAll(".nav-switch-btn").forEach(btn => {
+        btn.addEventListener("click", () => this.switchView("catalogue"));
+      });
+      return;
+    }
+
+    this.bookmarksGrid.innerHTML = "";
+    bookmarkedBooks.forEach(book => {
+      const card = this.createCardElement(book);
+      this.bookmarksGrid.appendChild(card);
+    });
+  }
+
+  createCardElement(book) {
+    const isBookmarked = this.bookmarks.has(book.id);
+    const card = createBookCard(book, isBookmarked);
+
+    const bookmarkBtn = card.querySelector(".btn-bookmark");
+    if (bookmarkBtn) {
+      bookmarkBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.toggleBookmark(book.id);
+      });
+    }
+
+    const detailBtn = card.querySelector(".btn-open-detail");
+    if (detailBtn) {
+      detailBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.openBookDetail(book.id);
+      });
+    }
+
+    card.addEventListener("click", () => {
+      this.openBookDetail(book.id);
+    });
+
+    return card;
   }
 
   openBookDetail(bookId) {
@@ -313,7 +397,6 @@ class App {
     this.selectedCategory = "Tous les ouvrages";
     this.selectedPhilosophy = "all";
     this.searchQuery = "";
-    this.showOnlyBookmarks = false;
     if (this.searchInput) this.searchInput.value = "";
     if (this.searchClearBtn) this.searchClearBtn.classList.add("hidden");
     this.renderCategoryTabs();
@@ -321,9 +404,34 @@ class App {
     this.renderBooks();
   }
 
-  // --- Search & Global Events ---
+  // --- Event Bindings ---
   bindEvents() {
-    // Search input
+    // Screen Switch Buttons (Tabs, Header, Shortcuts)
+    document.addEventListener("click", (e) => {
+      const switchBtn = e.target.closest(".nav-switch-btn");
+      if (switchBtn) {
+        const targetView = switchBtn.getAttribute("data-view");
+        if (targetView) {
+          this.switchView(targetView);
+        }
+      }
+    });
+
+    // Quiz triggers
+    document.querySelectorAll(".btn-open-quiz").forEach(btn => {
+      btn.addEventListener("click", () => {
+        this.quizModal.open();
+      });
+    });
+
+    const quizScreenLaunchBtn = document.getElementById("btn-launch-quiz-screen");
+    if (quizScreenLaunchBtn) {
+      quizScreenLaunchBtn.addEventListener("click", () => {
+        this.quizModal.open();
+      });
+    }
+
+    // Search Input
     if (this.searchInput) {
       this.searchInput.addEventListener("input", (e) => {
         this.searchQuery = e.target.value;
@@ -347,63 +455,13 @@ class App {
       }
     }
 
-    // Keyboard shortcut '/' to focus search
+    // Global shortcut '/' to focus search in catalogue
     window.addEventListener("keydown", (e) => {
       if (e.key === "/" && document.activeElement !== this.searchInput && !this.detailModal.currentBook && !this.quizModal.isOpen) {
         e.preventDefault();
-        this.searchInput?.focus();
+        this.switchView("catalogue");
+        setTimeout(() => this.searchInput?.focus(), 50);
       }
-    });
-
-    // Quiz Launchers
-    document.querySelectorAll(".btn-open-quiz").forEach(btn => {
-      btn.addEventListener("click", () => {
-        this.quizModal.open();
-      });
-    });
-
-    // Navigation triggers (Header & Mobile Bottom Nav)
-    document.querySelectorAll(".nav-link-explore").forEach(btn => {
-      btn.addEventListener("click", () => {
-        this.resetFilters();
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      });
-    });
-
-    document.querySelectorAll(".nav-link-bookmarks").forEach(btn => {
-      btn.addEventListener("click", () => {
-        this.showOnlyBookmarks = true;
-        this.renderCategoryTabs();
-        this.renderBooks();
-        window.scrollTo({ top: document.getElementById("catalogue-anchor")?.offsetTop - 80 || 0, behavior: "smooth" });
-      });
-    });
-
-    document.querySelectorAll(".nav-link-stages").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const el = document.getElementById("stages-section");
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth" });
-        }
-      });
-    });
-
-    document.querySelectorAll(".nav-link-journal").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const el = document.getElementById("journal-section");
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth" });
-        }
-      });
-    });
-
-    document.querySelectorAll(".nav-link-manifesto").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const el = document.getElementById("manifesto-section");
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth" });
-        }
-      });
     });
   }
 
@@ -418,7 +476,7 @@ class App {
         this.connectionStatus.innerHTML = `
           <div class="bg-amber-500/20 border-b border-amber-500/30 text-amber-200 text-xs px-4 py-1.5 text-center font-medium flex items-center justify-center gap-2">
             <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-            <span>Mode Hors-ligne actif — Consultation complète du Codex depuis le cache local</span>
+            <span>Mode Hors-ligne actif — Consultation complète depuis le cache local</span>
           </div>
         `;
       }
@@ -443,10 +501,10 @@ class App {
       window.addEventListener("load", () => {
         navigator.serviceWorker.register("./sw.js")
           .then(reg => {
-            console.log("[PWA] Service Worker registered successfully, scope:", reg.scope);
+            console.log("[PWA] Service Worker actif, scope:", reg.scope);
           })
           .catch(err => {
-            console.warn("[PWA] Service Worker registration failed:", err);
+            console.warn("[PWA] Erreur enregistrement Service Worker:", err);
           });
       });
     }
