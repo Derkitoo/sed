@@ -39,19 +39,27 @@ L'application embarque une base de données locale intégrée avec analyse compl
    - **Étape 05 — L'Intimité, l'Abandon & la Renaissance du Lien** (*Sanctuaire d'intimité, consentement clair, déposition des masques*).
    - *Pour chaque étape :* Mécanismes psychologiques inconscients, plan d'action concret, répliques calibrées, signaux d'intérêt (*Green flags*), piège fatal, auto-évaluation interactive et liens vers les traités du Codex.
 
-3. **Fiche Détaillée Complète (Modal & Bottom Sheet) :**
+3. **Le Carnet Secret & Journal de Bord Relationnel (🔒 Protégé par code PIN) :**
+   - **Confidentialité absolue :** Données stockées 100% en local (`localStorage`), protégées par un code PIN à 4 chiffres personnalisé, verrouillable à tout moment.
+   - **Fiches de Rencontres individualisées :** Profil, pseudonyme poétique, cadre de rencontre, statut (En cours, Complice/Intime, En pause) et suivi de l'étape du Codex (1 à 5).
+   - **Carte Mémoire d'Écoute Active (Dale Carnegie) :** Rêves et passions confiés, détails singuliers à retenir (goûts, anecdotes, anniversaires), et sujets sensibles à respecter.
+   - **Détection des Signaux (Robert Greene & Robert Cialdini) :** Recueil des signaux d'intérêt (*Green Flags*) et des points de vigilance (*Red Flags*), archétype psychologique.
+   - **Journal Chronologique des Rendez-vous :** Récits datés des interactions, auto-évaluation de la présence et de la posture intérieure, et stratégie pour la prochaine étape.
+   - **Sauvegarde & Restauration :** Exportation et importation JSON en un clic, ou réinitialisation d'urgence.
+
+4. **Fiche Détaillée Complète (Modal & Bottom Sheet) :**
    - Onglet **Synthèse** de l'œuvre et thèse centrale.
    - Onglet **Concepts Clés** expliqués en détail.
    - Onglet **Mises en Situation Pratiques** (Conseil concret + Le piège à éviter).
    - Onglet **Citations Mémorables** avec bouton 1-clic pour copier dans le presse-papier et feedback toast.
    - Bouton de mise en favori (bookmarks) persistant dans le `localStorage`.
 
-4. **Diagnostic / Quiz Interactif "Quel séducteur/approche êtes-vous ?" :**
+5. **Diagnostic / Quiz Interactif "Quel séducteur/approche êtes-vous ?" :**
    - Mini-questionnaire à 4 questions psychologiques et comportementales.
    - Calcul de score et révélation de l'archétype (*L'Honnête Radical*, *Le Stratège Dramaturge*, *L'Esthète Poète*, *Le Psychologue Perspicace*).
    - Présentation des atouts, du point de vigilance et lien direct vers l'ouvrage recommandé.
 
-5. **Widget Interactif "Citation du Jour" :**
+6. **Widget Interactif "Citation du Jour" :**
    - Citation aléatoire seedée quotidiennement, avec options de tirage aléatoire, copie rapide et découverte du livre associé.
 
 5. **Exigences PWA & Offline-First :**

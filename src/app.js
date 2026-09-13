@@ -12,6 +12,7 @@ import { PwaInstallBanner } from "./components/PwaInstallBanner.js";
 import { Toast } from "./components/Toast.js";
 import { getIcon } from "./components/Icons.js";
 import { StagesView } from "./components/StagesView.js";
+import { JournalView } from "./components/JournalView.js";
 
 class App {
   constructor() {
@@ -48,6 +49,8 @@ class App {
     this.stagesView = new StagesView("stages-container", (bookId) => {
       this.openBookDetail(bookId);
     });
+
+    this.journalView = new JournalView("journal-container");
 
     this.pwaBanner = new PwaInstallBanner("pwa-banner-container", "header-install-btn");
 
@@ -379,6 +382,15 @@ class App {
     document.querySelectorAll(".nav-link-stages").forEach(btn => {
       btn.addEventListener("click", () => {
         const el = document.getElementById("stages-section");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth" });
+        }
+      });
+    });
+
+    document.querySelectorAll(".nav-link-journal").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const el = document.getElementById("journal-section");
         if (el) {
           el.scrollIntoView({ behavior: "smooth" });
         }

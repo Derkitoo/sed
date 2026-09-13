@@ -3,7 +3,7 @@
  * Stratégie Offline-First (Stale-While-Revalidate & Cache-First)
  */
 
-const CACHE_NAME = "seduction-codex-v1.1.0";
+const CACHE_NAME = "seduction-codex-v1.2.0";
 
 const STATIC_ASSETS = [
   "./",
@@ -17,6 +17,7 @@ const STATIC_ASSETS = [
   "./src/components/Toast.js",
   "./src/components/QuoteWidget.js",
   "./src/components/StagesView.js",
+  "./src/components/JournalView.js",
   "./src/components/BookCard.js",
   "./src/components/BookDetailModal.js",
   "./src/components/QuizModal.js",
