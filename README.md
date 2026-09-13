@@ -31,19 +31,27 @@ L'application embarque une base de données locale intégrée avec analyse compl
    - Filtre rapide par approche philosophique (*Sans manipulation*, *Jeux de pouvoir*, *Poésie/Analyse*).
    - Moteur de recherche instantané (titre, auteur, concepts clés, tags) avec raccourci clavier `/`.
 
-2. **Fiche Détaillée Complète (Modal & Bottom Sheet) :**
+2. **Parcours Initiatique : Les 5 Grandes Étapes de la Séduction :**
+   - **Étape 01 — L'Aura & L'Attractivité Intrinsèque** (*Avant la rencontre : Sécurité intérieure, Non-Neediness, posture*).
+   - **Étape 02 — L'Approche & L'Éveil de la Curiosité** (*Le Premier Contact : Polarisation spontanée, règle des 3 secondes*).
+   - **Étape 03 — La Connexion Émotionnelle & Le Rapport** (*L'Écoute active, maïeutique, réciprocité des vulnérabilités*).
+   - **Étape 04 — La Tension Érotique, le Mystère & l'Attente** (*L'art de l'absence, contrastes, escalade kinesthésique*).
+   - **Étape 05 — L'Intimité, l'Abandon & la Renaissance du Lien** (*Sanctuaire d'intimité, consentement clair, déposition des masques*).
+   - *Pour chaque étape :* Mécanismes psychologiques inconscients, plan d'action concret, répliques calibrées, signaux d'intérêt (*Green flags*), piège fatal, auto-évaluation interactive et liens vers les traités du Codex.
+
+3. **Fiche Détaillée Complète (Modal & Bottom Sheet) :**
    - Onglet **Synthèse** de l'œuvre et thèse centrale.
    - Onglet **Concepts Clés** expliqués en détail.
    - Onglet **Mises en Situation Pratiques** (Conseil concret + Le piège à éviter).
    - Onglet **Citations Mémorables** avec bouton 1-clic pour copier dans le presse-papier et feedback toast.
    - Bouton de mise en favori (bookmarks) persistant dans le `localStorage`.
 
-3. **Diagnostic / Quiz Interactif "Quel séducteur/approche êtes-vous ?" :**
+4. **Diagnostic / Quiz Interactif "Quel séducteur/approche êtes-vous ?" :**
    - Mini-questionnaire à 4 questions psychologiques et comportementales.
    - Calcul de score et révélation de l'archétype (*L'Honnête Radical*, *Le Stratège Dramaturge*, *L'Esthète Poète*, *Le Psychologue Perspicace*).
    - Présentation des atouts, du point de vigilance et lien direct vers l'ouvrage recommandé.
 
-4. **Widget Interactif "Citation du Jour" :**
+5. **Widget Interactif "Citation du Jour" :**
    - Citation aléatoire seedée quotidiennement, avec options de tirage aléatoire, copie rapide et découverte du livre associé.
 
 5. **Exigences PWA & Offline-First :**

@@ -11,6 +11,7 @@ import { QuoteWidget } from "./components/QuoteWidget.js";
 import { PwaInstallBanner } from "./components/PwaInstallBanner.js";
 import { Toast } from "./components/Toast.js";
 import { getIcon } from "./components/Icons.js";
+import { StagesView } from "./components/StagesView.js";
 
 class App {
   constructor() {
@@ -41,6 +42,10 @@ class App {
     });
 
     this.quoteWidget = new QuoteWidget("quote-widget-container", (bookId) => {
+      this.openBookDetail(bookId);
+    });
+
+    this.stagesView = new StagesView("stages-container", (bookId) => {
       this.openBookDetail(bookId);
     });
 
@@ -368,6 +373,15 @@ class App {
         this.renderCategoryTabs();
         this.renderBooks();
         window.scrollTo({ top: document.getElementById("catalogue-anchor")?.offsetTop - 80 || 0, behavior: "smooth" });
+      });
+    });
+
+    document.querySelectorAll(".nav-link-stages").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const el = document.getElementById("stages-section");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth" });
+        }
       });
     });
 
